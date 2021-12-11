@@ -6,6 +6,7 @@ import time
 import select
 import binascii
 
+#default valuse set from start
 ICMP_ECHO_REQUEST = 8
 MAX_HOPS = 30
 TIMEOUT = 2.0
@@ -136,6 +137,7 @@ def get_route(hostname):
                     delay = timeReceived - t
                     delay = round(delay * 1000)
                     delay_as_string = str(delay) + "ms"
+                    #need to diff between IP address and URI
                     tracelist2.append([str(ttl), delay_as_string, addr[0], hostname_try])
                     #Fill in end
                     print('{}\t{}\t{}\t{}'.format(str(ttl), delay_as_string, addr[0], hostname_try))
@@ -159,9 +161,9 @@ def get_route(hostname):
                     delay = round(delay * 1000)
                     delay_as_string = str(delay) + "ms"
                     tracelist2.append([str(ttl), delay_as_string, addr[0], hostname_try])
-                    #Fill in end
+                    return tracelist2 #used at end to return a value for none
+                    # Fill in end
                     print('{}\t{}\t{}\t{}'.format(str(ttl), delay_as_string, addr[0], hostname_try))
-                    return tracelist2
                 else:
                     #Fill in start
                     #If there is an exception/error to your if statements, you should append that to your list here
