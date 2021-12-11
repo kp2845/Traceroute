@@ -42,11 +42,23 @@ def build_packet():
     # In the sendOnePing() method of the ICMP Ping exercise ,firstly the header of our
     # packet to be sent was made, secondly the checksum was appended to the header and
     # then finally the complete packet was sent to the destination.
+    #myID = os.getpid() & 0xFFFF  # Return the current process id
+
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
+    data = struct.pack("d", time.time())
+    # Calculate the checksum on the data and the dummy header.
+    myChecksum = checksum(header + data)
 
     # Make the header in a similar way to the ping exercise.
     # Append checksum to the header.
+    if sys.platform == 'darwin':
+        # Convert 16-bit integers from host to network  byte order
+        myChecksum = htons(myChecksum) & 0xffff
+    else:
+        myChecksum = htons(myChecksum)
 
     # Don’t send the packet yet , just return the final packet in this function.
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     #Fill in end
 
     # So the function ending should look like this
@@ -65,6 +77,10 @@ def get_route(hostname):
 
             #Fill in start
             # Make a raw socket named mySocket
+            # Pull in from Pinger Lab
+            icmp = getprotobyname("icmp")
+            mySocket = socket(AF_INET, SOCK_RAW, icmp)
+            mySocket.close() #try me
             #Fill in end
 
             mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl))
@@ -80,6 +96,7 @@ def get_route(hostname):
                     tracelist1.append("* * * Request timed out.")
                     #Fill in start
                     #You should add the list above to your all traces list
+                    tracelist2.append([str(ttl), "* * * Request timed out. "])
                     #Fill in end
                 recvPacket, addr = mySocket.recvfrom(1024)
                 timeReceived = time.time()
@@ -88,6 +105,7 @@ def get_route(hostname):
                     tracelist1.append("* * * Request timed out.")
                     #Fill in start
                     #You should add the list above to your all traces list
+                    tracelist2.append([str(ttl), "* * * Request timed out. "])
                     #Fill in end
             except timeout:
                 continue
@@ -95,36 +113,49 @@ def get_route(hostname):
             else:
                 #Fill in start
                 #Fetch the icmp type from the IP packet
+                ICMPheaderfetch = recPacket[20:28]
+                types, Code, Checksum, packetid, Sequence = struct.unpack('bbHHh', ICMPheaderfetch)
                 #Fill in end
                 try: #try to fetch the hostname
                     #Fill in start
+                    hostname_try = gethostbyname(hostname)
                     #Fill in end
                 except herror:   #if the host does not provide a hostname
                     #Fill in start
+                    hostname_try = 'hostname not returnable'
                     #Fill in end
 
                 if types == 11:
                     bytes = struct.calcsize("d")
-                    timeSent = struct.unpack("d", recvPacket[28:28 +
-                    bytes])[0]
+                    timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     #Fill in start
                     #You should add your responses to your lists here
+                    delay = timeReceived - t
+                    delay_as_string = str(delay)
+                    tracelist2.append([str(ttl), delay_as_string, hostname, hostname_try])
                     #Fill in end
                 elif types == 3:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     #Fill in start
                     #You should add your responses to your lists here
+                    delay = timeReceived - t
+                    delay_as_string = str(delay) + "ms"
+                    tracelist2.append([str(ttl), delay_as_string, hostname, hostname_try])
                     #Fill in end
                 elif types == 0:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     #Fill in start
                     #You should add your responses to your lists here and return your list if your destination IP is met
+                    delay = timeReceived - timeSent
+                    delay_as_string = str(delay) + "ms"
+                    tracelist2.append([str(ttl), delay_as_string, hostname, hostname_try])
                     #Fill in end
                 else:
                     #Fill in start
                     #If there is an exception/error to your if statements, you should append that to your list here
+                    tracelist2.append([str(ttl), "* * *", 'Request timed out'])
                     #Fill in end
                 break
             finally:
