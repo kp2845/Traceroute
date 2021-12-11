@@ -161,6 +161,7 @@ def get_route(hostname):
                     tracelist2.append([str(ttl), delay_as_string, addr[0], hostname_try])
                     #Fill in end
                     print('{}\t{}\t{}\t{}'.format(str(ttl), delay_as_string, addr[0], hostname_try))
+                    return tracelist2
                 else:
                     #Fill in start
                     #If there is an exception/error to your if statements, you should append that to your list here
